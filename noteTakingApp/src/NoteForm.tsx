@@ -1,7 +1,7 @@
 import { FormEvent, useRef, useState } from "react";
 import { Button, Col, Form, Row, Stack } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
-import CreateReactSelect from "react-select/creatable";
+import CreatableReactSelect from "react-select/creatable";
 import { NoteData, Tag } from "./App";
 import { v4 as uuidV4 } from "uuid";
 
@@ -9,31 +9,30 @@ type NoteFormProps = {
   onSubmit: (data: NoteData) => void;
   onAddTag: (tag: Tag) => void;
   availableTags: Tag[];
-} & NoteData;
+} & Partial<NoteData>;
 
-export default function NoteForm({
+export function NoteForm({
   onSubmit,
   onAddTag,
   availableTags,
-  title,
-  markdown,
-  tags,
+  title = "",
+  markdown = "",
+  tags = [],
 }: NoteFormProps) {
-  const [selectedTags, setTags] = useState<Tag[]>(tags);
   const titleRef = useRef<HTMLInputElement>(null);
   const markdownRef = useRef<HTMLTextAreaElement>(null);
+  const [selectedTags, setSelectedTags] = useState<Tag[]>(tags);
   const navigate = useNavigate();
 
-  function handleSubmit(event: FormEvent) {
-    event.preventDefault();
-    // const title = titleRef.current?.value;
-    // const markdown = markdownRef.current?.value;
-    // console.log(title, markdown);
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+
     onSubmit({
-      title: titleRef.current?.value || "",
-      markdown: markdownRef.current?.value || "",
+      title: titleRef.current!.value,
+      markdown: markdownRef.current!.value,
       tags: selectedTags,
     });
+
     navigate("..");
   }
 
@@ -44,31 +43,26 @@ export default function NoteForm({
           <Col>
             <Form.Group controlId="title">
               <Form.Label>Title</Form.Label>
-              <Form.Control
-                ref={titleRef}
-                type="text"
-                placeholder="Enter title"
-                defaultValue={title}
-              />
+              <Form.Control ref={titleRef} required defaultValue={title} />
             </Form.Group>
           </Col>
           <Col>
             <Form.Group controlId="tags">
               <Form.Label>Tags</Form.Label>
-              <CreateReactSelect // https://react-select.com/creatable
+              <CreatableReactSelect
                 onCreateOption={(label) => {
                   const newTag = { id: uuidV4(), label };
                   onAddTag(newTag);
-                  setTags([...tags, newTag]);
+                  setSelectedTags((prev) => [...prev, newTag]);
                 }}
-                value={tags.map((tag) => {
+                value={selectedTags.map((tag) => {
                   return { label: tag.label, value: tag.id };
                 })}
                 options={availableTags.map((tag) => {
                   return { label: tag.label, value: tag.id };
                 })}
                 onChange={(tags) => {
-                  setTags(
+                  setSelectedTags(
                     tags.map((tag) => {
                       return { label: tag.label, id: tag.value };
                     })
@@ -83,15 +77,20 @@ export default function NoteForm({
           <Form.Label>Body</Form.Label>
           <Form.Control
             defaultValue={markdown}
-            ref={markdownRef}
+            required
             as="textarea"
-            rows={12}
+            ref={markdownRef}
+            rows={15}
           />
         </Form.Group>
         <Stack direction="horizontal" gap={2} className="justify-content-end">
-          <Button type="submit">Save</Button>
+          <Button type="submit" variant="primary">
+            Save
+          </Button>
           <Link to="..">
-            <Button variant="secondary">Cancel</Button>
+            <Button type="button" variant="outline-secondary">
+              Cancel
+            </Button>
           </Link>
         </Stack>
       </Stack>
